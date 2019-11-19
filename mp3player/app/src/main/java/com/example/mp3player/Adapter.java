@@ -107,7 +107,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder>
         }
         public void setItem(final MusicInfo item){
                 itemname.setText(item.getTitle());
-                //itemImage.setText(item.getMoney());
+                itemImage.setImageResource(R.drawable.player);
         }
 
     }

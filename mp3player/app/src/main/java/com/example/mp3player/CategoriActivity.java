@@ -23,6 +23,7 @@ public class CategoriActivity extends AppCompatActivity {
     ArrayList<MusicInfo> albums = new ArrayList<MusicInfo>();
     boolean check = false;
     Intent intent;
+    String foldername;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,9 +63,11 @@ public class CategoriActivity extends AppCompatActivity {
 
             if(bigfolder.equals("앨범")){
                 nameChck = musicDto.getAlbum();
+                foldername = "앨범";
             }
             else if(bigfolder.equals("아티스트")){
                 nameChck = musicDto.getArtist();
+                foldername ="아티스트";
             }
 
             for(int i=0;i<albums.size();i++){
@@ -95,11 +98,22 @@ public class CategoriActivity extends AppCompatActivity {
         folderAdp.setOnItemClickListener(new folderAdapter.OnPersonItemClickListenerd() {
             @Override
             public void onItemClick(folderAdapter.ViewHolder holder, View view, int position) {
+                if(foldername.equals("앨범")){
+                    String foldernam = folderAdp.getItem(position).getTitle();
+                    intent = new Intent(context, MusicListActivity.class);
+                    intent.putExtra("folderName",foldernam);
+                    intent.putExtra("folderType",foldername);
 
-                intent = new Intent(context, MusicListActivity.class);
-                intent.putExtra("list",albums);
+                    startActivity(intent);
+                }
+                else if(foldername.equals("아티스트")){
+                    String foldernam = folderAdp.getItem(position).getTitle();
+                    intent = new Intent(context, MusicListActivity.class);
+                    intent.putExtra("folderName",foldernam);
+                    intent.putExtra("folderType",foldername);
 
-                startActivity(intent);
+                    startActivity(intent);
+                }
             }
         });
         GridLayoutManager gridLayoutManager = new GridLayoutManager(context,1);
@@ -110,4 +124,5 @@ public class CategoriActivity extends AppCompatActivity {
         cursor.close();
 
     }
+
 }

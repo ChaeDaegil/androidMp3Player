@@ -29,6 +29,7 @@ public class MusicPlayerActivity extends AppCompatActivity {
     Button play;
     Button before;
     Button next;
+    Button stop;
     Intent intent;
     MusicInfo musicInfo;
     @Override
@@ -41,15 +42,20 @@ public class MusicPlayerActivity extends AppCompatActivity {
         play = (Button)findViewById(R.id.play);
         before =(Button)findViewById(R.id.before);
         next =(Button)findViewById(R.id.next);
+        stop =(Button)findViewById(R.id.stop);
         intent = getIntent();
         musicInfo = (MusicInfo) intent.getSerializableExtra("music");
+        BtnOnClickListener onClickListener = new BtnOnClickListener() ;
+        mediaPlayer = new MediaPlayer();
         playMusic(musicInfo);
-
+        play.setOnClickListener(onClickListener);
+        before.setOnClickListener(onClickListener);
+        next.setOnClickListener(onClickListener);
+        stop.setOnClickListener(onClickListener);
     }
 
     public void playMusic(MusicInfo musicDto) {
         try {
-            mediaPlayer = new MediaPlayer();
             Uri musicURI = Uri.withAppendedPath(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, ""+musicDto.getId());
             mediaPlayer.reset();
@@ -57,6 +63,7 @@ public class MusicPlayerActivity extends AppCompatActivity {
             mediaPlayer.prepare();
             mediaPlayer.start();
 
+            title.setText(musicInfo.getTitle());
             Bitmap bitmap = BitmapFactory.decodeFile(getCoverArtPath(Long.parseLong(musicDto.getAlbumId()),getApplication()));
             if(bitmap ==null){
                 musicart.setImageResource(R.drawable.player);
@@ -85,6 +92,29 @@ public class MusicPlayerActivity extends AppCompatActivity {
         }
         albumCursor.close();
         return result;
+    }
+    class BtnOnClickListener implements Button.OnClickListener {
+        @Override
+        public void onClick(View view) {
+            switch (view.getId()) {
+                case R.id.play :
+                    stop.setVisibility(View.VISIBLE);
+                    play.setVisibility(View.GONE);
+                    System.out.println("play");
+                    mediaPlayer.start();
+                    break ;
+                case R.id.stop:
+                    stop.setVisibility(View.GONE);
+                    play.setVisibility(View.VISIBLE);
+                    System.out.println("stop");
+                    mediaPlayer.pause();
+                    break;
+                case R.id.before :
+                    break ;
+                case R.id.next :
+                    break ;
+            }
+        }
     }
 
 }

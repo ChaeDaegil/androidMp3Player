@@ -79,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
             musicDto.setTitle(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)));
             musicDto.setArtist(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)));
             musicDto.setAlbum(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)));
-            System.out.println(musicDto.getVloume());
             albums.add(musicDto);
         }
     }

@@ -1,6 +1,8 @@
 package com.example.mp3player;
 
-public class folderInfo {
+import java.io.Serializable;
+
+public class folderInfo implements Serializable {
 
     String album_id;
     String title;

@@ -7,6 +7,16 @@ public class MusicInfo implements Serializable {
     private String albumId;
     private String title;
     private String artist;
+    private String album;
+
+    public String getAlbum() {
+        return album;
+    }
+
+    public void setAlbum(String album) {
+        this.album = album;
+    }
+
 
     public MusicInfo() {
     }

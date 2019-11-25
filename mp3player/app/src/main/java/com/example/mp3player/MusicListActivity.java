@@ -61,6 +61,7 @@ public class MusicListActivity extends AppCompatActivity {
                 MusicInfo musicInfo= adapter.getItem(position);
                 intent = new Intent(context, MusicPlayerActivity.class);
                 intent.putExtra("music",musicInfo);
+                intent.putExtra("musiclist", albums); /*송신*/
                 startActivity(intent);
             }
         });

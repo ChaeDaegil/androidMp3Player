@@ -1,8 +1,15 @@
 package com.example.mp3player;
 
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ApplicationErrorReport.RunningServiceInfo;
 import android.app.ProgressDialog;
+import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+
+import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,6 +17,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -18,10 +26,14 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import com.example.mp3player.MusicService.MyBinder;
+
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class MusicPlayerActivity extends AppCompatActivity {
     SeekBar seekBar;
@@ -38,6 +50,25 @@ public class MusicPlayerActivity extends AppCompatActivity {
     ArrayList<MusicInfo> allmusic;
     boolean isPlaying = true;
 
+    MusicService ms; // 서비스 객체
+    boolean isService = false; // 서비스 중인 확인용
+    ServiceConnection conn = new ServiceConnection() {
+        public void onServiceConnected(ComponentName name,
+                                       IBinder service) {
+            // 서비스와 연결되었을 때 호출되는 메서드
+            // 서비스 객체를 전역변수로 저장
+            MyBinder mb = (MyBinder) service;
+            ms = mb.getService(); // 서비스가 제공하는 메소드 호출하여
+            mediaPlayer = ms.mediaPlayer;
+            playMusic(musicInfo);
+            // 서비스쪽 객체를 전달받을수 있슴
+            isService = true;
+        }
+        public void onServiceDisconnected(ComponentName name) {
+            // 서비스와 연결이 끊겼을 때 호출되는 메서드
+            isService = false;
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,11 +87,20 @@ public class MusicPlayerActivity extends AppCompatActivity {
         musicInfo = (MusicInfo) intent.getSerializableExtra("music");
         allmusic = (ArrayList<MusicInfo>) intent.getSerializableExtra("musiclist");
         BtnOnClickListener onClickListener = new BtnOnClickListener() ;
-        mediaPlayer = new MediaPlayer();
+
+
 
         if(musicInfo != null) {
-            playMusic(musicInfo);
         }
+        serviceList();
+            Intent servi = new Intent(
+                    MusicPlayerActivity.this, // 현재 화면
+                    MusicService.class); // 다음넘어갈 컴퍼넌트
+
+            servi.putExtra("musicinfo",musicInfo);
+            bindService(servi, // intent 객체
+                    conn, // 서비스와 연결에 대한 정의
+                    Context.BIND_AUTO_CREATE);
 
         play.setOnClickListener(onClickListener);
         before.setOnClickListener(onClickListener);
@@ -86,62 +126,14 @@ public class MusicPlayerActivity extends AppCompatActivity {
                 }
             }
         });
+    }
 
-    }
-    public void nextMusic(ArrayList<MusicInfo> allmusic,MusicInfo musicInfo){
-
-        for(int a=0 ; a < allmusic.size() ; a++) {
-            System.out.println("마직막 번호" + allmusic.size());
-            if(musicInfo.getId().equals(allmusic.get(allmusic.size()-1).getId())){
-                musicInfo.setId(allmusic.get(0).getId());
-                musicInfo.setTitle(allmusic.get(0).getTitle());
-                musicInfo.setAlbum(allmusic.get(0).getAlbum());
-                musicInfo.setAlbumId(allmusic.get(0).getAlbumId());
-                musicInfo.setArtist(allmusic.get(0).getArtist());
-                break;
-            }
-            else if(allmusic.get(a).getId().equals(musicInfo.getId())) {
-                musicInfo.setId(allmusic.get( a + 1 ).getId());
-                musicInfo.setTitle(allmusic.get(a + 1).getTitle());
-                musicInfo.setAlbum(allmusic.get(a + 1).getAlbum());
-                musicInfo.setAlbumId(allmusic.get(a + 1).getAlbumId());
-                musicInfo.setArtist(allmusic.get(a + 1).getArtist());
-                break;
-            }
-        }
-        playMusic(musicInfo);
-    }
-    public void beforeMusic(ArrayList<MusicInfo> allmusic,MusicInfo musicInfo){
-        for(int a=0 ; a < allmusic.size() ; a++) {
-            System.out.println(musicInfo.getId() + " :::::: " + allmusic.get(a).getId());
-            if(musicInfo.getId().equals(allmusic.get(0).getId())){
-                musicInfo.setId(allmusic.get(allmusic.size()).getId());
-                musicInfo.setTitle(allmusic.get(allmusic.size()).getTitle());
-                musicInfo.setAlbum(allmusic.get(allmusic.size()).getAlbum());
-                musicInfo.setAlbumId(allmusic.get(allmusic.size()).getAlbumId());
-                musicInfo.setArtist(allmusic.get(allmusic.size()).getArtist());
-                break;
-            }
-            if(allmusic.get(a).getId().equals(musicInfo.getId())) {
-                musicInfo.setId(allmusic.get( a -1).getId());
-                musicInfo.setTitle(allmusic.get(a - 1).getTitle());
-                musicInfo.setAlbum(allmusic.get(a - 1).getAlbum());
-                musicInfo.setAlbumId(allmusic.get(a - 1).getAlbumId());
-                musicInfo.setArtist(allmusic.get(a - 1).getArtist());
-                break;
-            }
-        }
-        playMusic(musicInfo);
-    }
     public void playMusic(MusicInfo musicDto) {
         try {
+
             seekBar.setProgress(0);
             Uri musicURI = Uri.withAppendedPath(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, ""+musicDto.getId());
-            mediaPlayer.reset();
-            mediaPlayer.setDataSource(this, musicURI);
-            mediaPlayer.prepare();
-            mediaPlayer.start();
             seekBar.setMax(mediaPlayer.getDuration());
             title.setText(musicInfo.getTitle());
             Bitmap bitmap = BitmapFactory.decodeFile(getCoverArtPath(Long.parseLong(musicDto.getAlbumId()),getApplication()));
@@ -180,21 +172,23 @@ public class MusicPlayerActivity extends AppCompatActivity {
                 case R.id.play :
                     stop.setVisibility(View.VISIBLE);
                     play.setVisibility(View.GONE);
-                    System.out.println("play");
                     mediaPlayer.start();
                     break ;
                 case R.id.stop:
                     stop.setVisibility(View.GONE);
                     play.setVisibility(View.VISIBLE);
-                    System.out.println("stop");
                     mediaPlayer.pause();
                     break;
                 case R.id.before :
-                    beforeMusic(allmusic,musicInfo);
+                    ms.beforeMusic(allmusic,musicInfo);
+                    musicInfo = ms.musicInfoservice;
+                    playMusic(musicInfo);
                     seekBar.setProgress(0);
                     break ;
                 case R.id.next :
-                    nextMusic(allmusic,musicInfo);
+                    ms.nextMusic(allmusic,musicInfo);
+                    musicInfo = ms.musicInfoservice;
+                    playMusic(musicInfo);
                     seekBar.setProgress(0);
                     break ;
             }
@@ -216,13 +210,16 @@ public class MusicPlayerActivity extends AppCompatActivity {
             }
         }
     }
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        isPlaying = false;
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
+
+    public void serviceList(){
+        /*서비스 리스트*/
+        ActivityManager am = (ActivityManager)getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningServiceInfo> rs = am.getRunningServices(1000);
+        System.out.println(rs.size()+"크기 ㅅㅄㅄㅄㅄㅄㅄㅄㅄㅄㅄ");
+        for(int i=0; i<rs.size(); i++){
+            ActivityManager.RunningServiceInfo rsi = rs.get(i);
+            Log.d("run service","Package Name : " + rsi.service.getPackageName());
+            Log.d("run service","Class Name : " + rsi.service.getClassName());
         }
     }
 }

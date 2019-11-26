@@ -1,10 +1,13 @@
 package com.example.mp3player;
 
+import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AppComponentFactory;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.strictmode.IntentReceiverLeakedViolation;
 import android.provider.MediaStore;
 import android.view.View;
 
@@ -62,6 +65,7 @@ public class MusicListActivity extends AppCompatActivity {
                 intent = new Intent(context, MusicPlayerActivity.class);
                 intent.putExtra("music",musicInfo);
                 intent.putExtra("musiclist", albums); /*송신*/
+
                 startActivity(intent);
             }
         });
@@ -122,4 +126,5 @@ public class MusicListActivity extends AppCompatActivity {
         cursor.close();
 
     }
+
 }

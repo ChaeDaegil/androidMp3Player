@@ -4,26 +4,47 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.IBinder;
 import android.provider.MediaStore;
+import android.widget.SeekBar;
 
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 
 public class MusicService extends Service {
+    IBinder mBinder = new MyBinder();
+    MediaPlayer mediaPlayer = new MediaPlayer();
+    MusicInfo musicInfoservice;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        MusicInfo musicInfo = (MusicInfo) intent.getSerializableExtra("musicinfo");
+        playMusic(musicInfo);
+        return mBinder;
     }
+
+    public class MyBinder extends Binder {
+        MusicService getService(){
+            return MusicService.this;
+        }
+    }
+
+    @Override
+    public void onCreate(){
+        System.out.println("oncreate");
+        super.onCreate();
+    }
+
     @Override
     public int onStartCommand(Intent intent,int flags, int startId){
+        System.out.println("onStartCommand");
         if(intent == null){
-            return Service.START_STICKY;
+            return Service.START_NOT_STICKY;
         }else{
             processCommans(intent);
         }
@@ -61,6 +82,7 @@ public class MusicService extends Service {
                 break;
             }
         }
+        musicInfoservice=musicInfo;
         playMusic(musicInfo);
     }
     public void beforeMusic(ArrayList<MusicInfo> allmusic,MusicInfo musicInfo){
@@ -83,31 +105,23 @@ public class MusicService extends Service {
                 break;
             }
         }
+        musicInfoservice=musicInfo;
         playMusic(musicInfo);
     }
     public void playMusic(MusicInfo musicDto) {
         try {
-            seekBar.setProgress(0);
             Uri musicURI = Uri.withAppendedPath(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, ""+musicDto.getId());
             mediaPlayer.reset();
             mediaPlayer.setDataSource(this, musicURI);
             mediaPlayer.prepare();
             mediaPlayer.start();
-            seekBar.setMax(mediaPlayer.getDuration());
-            title.setText(musicInfo.getTitle());
-            Bitmap bitmap = BitmapFactory.decodeFile(getCoverArtPath(Long.parseLong(musicDto.getAlbumId()),getApplication()));
-            if(bitmap ==null){
-                musicart.setImageResource(R.drawable.player);
-            }else{
-                musicart.setImageBitmap(bitmap);
-            }
-
 
         }catch (Exception e){
 
         }
     }
+
     private static String getCoverArtPath(long albumId, Context context) {
 
         Cursor albumCursor = context.getContentResolver().query(

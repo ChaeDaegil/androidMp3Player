@@ -19,12 +19,10 @@ public class MusicService extends Service {
     IBinder mBinder = new MyBinder();
     MediaPlayer mediaPlayer = new MediaPlayer();
     MusicInfo musicInfoservice;
-
+    ArrayList<MusicInfo> allMusicService;
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        MusicInfo musicInfo = (MusicInfo) intent.getSerializableExtra("musicinfo");
-        playMusic(musicInfo);
         return mBinder;
     }
 
@@ -89,11 +87,11 @@ public class MusicService extends Service {
         for(int a=0 ; a < allmusic.size() ; a++) {
             System.out.println(musicInfo.getId() + " :::::: " + allmusic.get(a).getId());
             if(musicInfo.getId().equals(allmusic.get(0).getId())){
-                musicInfo.setId(allmusic.get(allmusic.size()).getId());
-                musicInfo.setTitle(allmusic.get(allmusic.size()).getTitle());
-                musicInfo.setAlbum(allmusic.get(allmusic.size()).getAlbum());
-                musicInfo.setAlbumId(allmusic.get(allmusic.size()).getAlbumId());
-                musicInfo.setArtist(allmusic.get(allmusic.size()).getArtist());
+                musicInfo.setId(allmusic.get(allmusic.size()-1).getId());
+                musicInfo.setTitle(allmusic.get(allmusic.size()-1).getTitle());
+                musicInfo.setAlbum(allmusic.get(allmusic.size()-1).getAlbum());
+                musicInfo.setAlbumId(allmusic.get(allmusic.size()-1).getAlbumId());
+                musicInfo.setArtist(allmusic.get(allmusic.size()-1).getArtist());
                 break;
             }
             if(allmusic.get(a).getId().equals(musicInfo.getId())) {
@@ -116,6 +114,8 @@ public class MusicService extends Service {
             mediaPlayer.setDataSource(this, musicURI);
             mediaPlayer.prepare();
             mediaPlayer.start();
+            musicInfoservice = musicDto;
+
 
         }catch (Exception e){
 
@@ -138,5 +138,8 @@ public class MusicService extends Service {
         }
         albumCursor.close();
         return result;
+    }
+    public void setAllMusicService(ArrayList<MusicInfo> allmusic){
+        this.allMusicService = allmusic;
     }
 }

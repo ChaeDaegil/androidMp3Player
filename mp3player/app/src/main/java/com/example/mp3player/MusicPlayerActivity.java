@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -49,26 +50,8 @@ public class MusicPlayerActivity extends AppCompatActivity {
     MusicInfo musicInfo;
     ArrayList<MusicInfo> allmusic;
     boolean isPlaying = true;
+    MusicService ms;
 
-    MusicService ms; // 서비스 객체
-    boolean isService = false; // 서비스 중인 확인용
-    ServiceConnection conn = new ServiceConnection() {
-        public void onServiceConnected(ComponentName name,
-                                       IBinder service) {
-            // 서비스와 연결되었을 때 호출되는 메서드
-            // 서비스 객체를 전역변수로 저장
-            MyBinder mb = (MyBinder) service;
-            ms = mb.getService(); // 서비스가 제공하는 메소드 호출하여
-            mediaPlayer = ms.mediaPlayer;
-            playMusic(musicInfo);
-            // 서비스쪽 객체를 전달받을수 있슴
-            isService = true;
-        }
-        public void onServiceDisconnected(ComponentName name) {
-            // 서비스와 연결이 끊겼을 때 호출되는 메서드
-            isService = false;
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,20 +70,15 @@ public class MusicPlayerActivity extends AppCompatActivity {
         musicInfo = (MusicInfo) intent.getSerializableExtra("music");
         allmusic = (ArrayList<MusicInfo>) intent.getSerializableExtra("musiclist");
         BtnOnClickListener onClickListener = new BtnOnClickListener() ;
-
-
+        MyApplication myApp = (MyApplication) getApplication();
+        ms = myApp.getService();
 
         if(musicInfo != null) {
+            mediaPlayer = ms.mediaPlayer;
+            ms.playMusic(musicInfo);
+            playMusic(musicInfo);
+            ms.setAllMusicService(allmusic);
         }
-        serviceList();
-            Intent servi = new Intent(
-                    MusicPlayerActivity.this, // 현재 화면
-                    MusicService.class); // 다음넘어갈 컴퍼넌트
-
-            servi.putExtra("musicinfo",musicInfo);
-            bindService(servi, // intent 객체
-                    conn, // 서비스와 연결에 대한 정의
-                    Context.BIND_AUTO_CREATE);
 
         play.setOnClickListener(onClickListener);
         before.setOnClickListener(onClickListener);
@@ -142,7 +120,13 @@ public class MusicPlayerActivity extends AppCompatActivity {
             }else{
                 musicart.setImageBitmap(bitmap);
             }
-
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                public void onCompletion(MediaPlayer arg0) {
+                    ms.nextMusic(allmusic,musicInfo);
+                    musicInfo = ms.musicInfoservice;
+                    playMusic(musicInfo);
+                }
+            });
 
         }catch (Exception e){
 
@@ -211,15 +195,4 @@ public class MusicPlayerActivity extends AppCompatActivity {
         }
     }
 
-    public void serviceList(){
-        /*서비스 리스트*/
-        ActivityManager am = (ActivityManager)getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
-        List<ActivityManager.RunningServiceInfo> rs = am.getRunningServices(1000);
-        System.out.println(rs.size()+"크기 ㅅㅄㅄㅄㅄㅄㅄㅄㅄㅄㅄ");
-        for(int i=0; i<rs.size(); i++){
-            ActivityManager.RunningServiceInfo rsi = rs.get(i);
-            Log.d("run service","Package Name : " + rsi.service.getPackageName());
-            Log.d("run service","Class Name : " + rsi.service.getClassName());
-        }
-    }
 }

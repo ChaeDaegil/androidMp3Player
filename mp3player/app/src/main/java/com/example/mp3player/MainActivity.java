@@ -30,6 +30,8 @@ public class MainActivity extends AppCompatActivity {
         musicList = (RecyclerView)findViewById(R.id.musicList);
         context = getApplicationContext();
         getMusicList();
+        MyApplication myApp = (MyApplication) getApplication();
+        myApp.createService();
 
         for(int a=0 ; a < fold.length ; a++) {
             folderInfo folder = new folderInfo();
